@@ -18,7 +18,7 @@ def sendXYData(x, y):
 print(ser.write)
 
 #カメラのキャプチャを開始
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(4)
 
 while True:
     # フレームを1つずつ読み込む
@@ -47,7 +47,8 @@ while True:
             cv2.circle(frame, (i[0], i[1]), 2, (0, 0, 255), 3)
             x = i[0]
             y = i[1]
-             
+            print('x:',x,)
+            print('y:',y,)
             sendXYData(x, y)
    
     # 画像を表示する
