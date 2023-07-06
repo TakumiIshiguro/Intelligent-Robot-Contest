@@ -1,0 +1,37 @@
+//ライントレース スイッチ付き
+const int WswitchPin = 7;//黒switch
+cosnt int BswitchPin = 6;//白switch
+
+targetRange = 340;//速度の変化の上限値
+
+sensor1~8Pin = A0~7;
+
+sensorValue[7];
+
+int threshold = 500;//閾値
+int white = 0;
+int black = 0;
+int target1 = 0;//右車輪の速度
+int target2 = 0;//左車輪の速度
+
+//カラーセンサ
+const unit8_t Tint=0;
+const uint16_t N=1500;
+
+//変数定義
+uint8_t   i=0;//カウンタ
+uint8_t   buff[8];//8bit×8バッファ
+uint16_t  datar, datag, datab, datair;//16bitデータ
+
+//ファンの回転
+const int MAX = 123;ファンの最高速
+const int PIN_MOTER = 13;arduino D13ピン(PWM)
+
+//サーボの回転
+int val;    // variable to read the value from the analog pin
+int angle;
+int A;   //じわじわ角度を回すための変数
+
+//ステッピングモータ
+const int DIR  = 14;モジュールのDIRピンに接続
+const int STEP = 15;モジュールのSTEPピンに接続

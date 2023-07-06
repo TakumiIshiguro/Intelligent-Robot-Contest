@@ -6,20 +6,29 @@ import time
 
 data = 0
 
+centerX = 480
+centerY = 375
+
+right_correctionX = 0
+left_correctionX = 0
+correctionY = 0
+
+right_speed = 0
+left_speed = 0
+
 # シリアルポートを開きます
 ser = serial.Serial('/dev/ttyACM0', 9600)
 
-def sendXYData(x, y):
-    header = b'XY'  # ヘッダのバイト列
-    x_bytes = int(x).to_bytes(2, 'little', signed=True)
-    y_bytes = int(y).to_bytes(2, 'little', signed=True)
-    ser.write(header + x_bytes + y_bytes)  # ヘッダと値のバイト列を連結して送信
-    print(ser.write)
+def sendData(right_speed, left_speed):
+    header = b'RL'  # ヘッダのバイト列
+    r_bytes = int(right_speed).to_bytes(2, 'little', signed=True)
+    l_bytes = int(left_speed).to_bytes(2, 'little', signed=True)
+    ser.write(header + r_bytes + l_bytes)  # ヘッダと値のバイト列を連結して送信
+
+print(ser.write)
 
 #カメラのキャプチャを開始
 cap = cv2.VideoCapture(4)
-
-cap.set(cv2.CAP_PROP_FPS,10)
 
 while True:
     # フレームを1つずつ読み込む
@@ -48,7 +57,24 @@ while True:
             cv2.circle(frame, (i[0], i[1]), 2, (0, 0, 255), 3)
             x = i[0]
             y = i[1]
-            sendXYData(x, y)
+            
+            right_correctionX = centerX - x
+            left_correctionX = right_correctionX * -1
+            correctionY = centerY - y
+
+            right_speed = 2048 + right_correctionX + correctionY
+            left_speed = 2048 + left_correctionX + correctionY
+   
+            if right_speed > 3048 or right_speed < 1048:
+              right_speed = 2048
+            if left_speed > 3048 or left_speed < 1048:
+              left_speed = 2048
+
+            sendData(right_speed, left_speed)
+            print(right_speed)
+            print(left_speed)
+
+            time.sleep(0.2)
    
     # 画像を表示する
     cv2.imshow('hcvideo', frame)
