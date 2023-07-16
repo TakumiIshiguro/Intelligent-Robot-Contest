@@ -18,7 +18,7 @@ cap = cv2.VideoCapture(4)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 # 円の検出間隔を設定
-detection_interval = 10  # フレーム数ごとに検出を行う
+detection_interval = 5  # フレーム数ごとに検出を行う
 
 frame_counter = 0
 
@@ -61,8 +61,8 @@ while True:
                 x = max_circle[0]
                 y = max_circle[1]
                 sendXYData(x, y)
-                print(x)
-                print(y)
+                print('x : ' ,x,)
+                print('y : ' ,y,)
 
                 # 検出した円を描画する
                 cv2.circle(frame, (x, y), max_radius, (0, 255, 0), 2)

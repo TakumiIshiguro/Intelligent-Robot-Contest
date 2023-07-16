@@ -2,10 +2,8 @@
 #include <Servo.h>
 #include <Wire.h>
 
-int angle;
-
-int centerX = 480;
-int centerY = 375;
+int centerX = 320;
+int centerY = 200;
 
 int right_correctionX;
 int left_correctionX;
@@ -16,23 +14,15 @@ int left_speed;
 int before_right_speed;
 int before_left_speed;
 
+//進行方向に対して
 JrkG2I2C jrk1(11);//右車輪
 JrkG2I2C jrk2(12);//左車輪
 JrkG2I2C jrk;
 
-Servo myservo;
-
 void setup() {
   Wire.begin();
 
-  myservo.attach(5);
-
-  myservo.write(angle);
-  
   Serial.begin(9600);
-  while (!Serial) {
-    ; 
-  }
   Serial.println("start");
 
   delay(2000);
@@ -51,15 +41,18 @@ void loop() {
     int16_t x, y;
     
     if (Serial.readBytes(header, 2) != 2 || header[0] != 'X' || header[1] != 'Y') {
+      Serial.println("error");
       return; 
     }
     
     if (Serial.readBytes((char*)&x, 2) != 2) {
       return; // x座標の読み込みに失敗した場合は終了
+      Serial.println("errorX");
     }
     
     if (Serial.readBytes((char*)&y, 2) != 2) {
       return; // y座標の読み込みに失敗した場合は終了
+      Serial.println("errorY");
     }
 
     right_correctionX = centerX - x;
@@ -78,22 +71,16 @@ void loop() {
 
     jrk1.setTarget(right_speed);
     jrk2.setTarget(left_speed);
+ 
+    Serial.print("x :");
+    Serial.println(x);
+    Serial.print("y :");
+    Serial.println(y);
 
-    Serial.print("right:");
-    Serial.println(right_speed);
-    Serial.print("left:");
-    Serial.println(left_speed);
-
-    if (before_right_speed = right_speed){
-      jrk1.stopMotor();      
-    }
-    if (before_left_speed = left_speed){
+    if (300 < x && x < 350 && 185 < y && y < 230){
+      Serial.println("stop_moter");
+      jrk1.stopMotor();
       jrk2.stopMotor();
     }
-    
-    before_right_speed = right_speed;
-    before_left_speed = left_speed;
-  
-    delay (10);
   }
 }
