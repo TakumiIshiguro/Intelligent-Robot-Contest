@@ -16,6 +16,8 @@ def sendXYData(x, y):
 cap = cv2.VideoCapture(4)
 
 cap.set(cv2.CAP_PROP_FPS, 30)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # 円の検出間隔を設定
 detection_interval = 5  # フレーム数ごとに検出を行う
@@ -41,7 +43,7 @@ while True:
         gaus = cv2.GaussianBlur(gray, (33, 33), sigmaX=3)
 
         # 円を検出
-        circles = cv2.HoughCircles(gaus, cv2.HOUGH_GRADIENT, 1, 250, param1=100, param2=25, minRadius=25, maxRadius=130)
+        circles = cv2.HoughCircles(gaus, cv2.HOUGH_GRADIENT, 1, 250, param1=100, param2=25, minRadius=25, maxRadius=250)
 
         # 検出した円が存在する場合にのみ処理する
         if circles is not None:

@@ -1,6 +1,10 @@
 #include <JrkG2.h>
-#include <Servo.h>
-#include <Wire.h>
+
+int limit = 0;
+const int WswitchPin = 7;
+const int BswitchPin = 6;
+
+const int targetRange = 1200;//あとで調整
 
 const int sensor1Pin = A0;
 const int sensor2Pin = A1;
@@ -11,38 +15,28 @@ const int sensor6Pin = A5;
 const int sensor7Pin = A6;
 const int sensor8Pin = A7;
 int sensorValue[7];
+// ラインの閾値
 int threshold = 500; // デフォルトの閾値
 int white = 0;
 int black = 0;
 int low_black = 0;
 int high_black = 0;
+
+int count;
+
 int target1 = 0;
 int target2 = 0;
-int count = 0;
-
-Servo myservo;
-int val;
-int angle;
-int A;
-
-const int BswitchPin = 6;
-const int WswitchPin = 7;
 
 JrkG2I2C jrk1(11);//右車輪
 JrkG2I2C jrk2(12);//左車輪
 JrkG2I2C jrk;
 
-const int MAX = 50;
-const int PIN_MOTER = 13;
-
-const int DIR = 14;
-const int STEP = 15;
-
 void setup() {
+  // Set up I2C.
   Wire.begin();
-
-  Serial.begin(9600);
-
+  // ピンの設定
+  pinMode(WswitchPin, INPUT_PULLUP);
+  pinMode(BswitchPin, INPUT_PULLUP);
   pinMode(sensor1Pin, INPUT);
   pinMode(sensor2Pin, INPUT);
   pinMode(sensor3Pin, INPUT);
@@ -51,18 +45,11 @@ void setup() {
   pinMode(sensor6Pin, INPUT);
   pinMode(sensor7Pin, INPUT);
   pinMode(sensor8Pin, INPUT);
-
-  myservo.attach(5);
-  angle = 0;
-  myservo.write(angle);
-
-  pinMode(WswitchPin, INPUT_PULLUP);
-  pinMode(BswitchPin, INPUT_PULLUP);
-  pinMode(PIN_MOTER, OUTPUT);
-  delay(2000);
+  // シリアル通信の開始
+  Serial.begin(9600);
 }
 void loop() {
- // スイッチの状態を読み取る
+  // スイッチの状態を読み取る
   int switch_W = digitalRead(WswitchPin);
   int switch_B = digitalRead(BswitchPin);
   if (switch_W == LOW) {  // スイッチが押された場合
@@ -86,70 +73,39 @@ void loop() {
   sensorValue[5] = analogRead(sensor6Pin);
   sensorValue[6] = analogRead(sensor7Pin);
   sensorValue[7] = analogRead(sensor8Pin);
+  int error = calculateError(sensorValue);
+  //Serial.print(" Error : ");//エラーの値確認用
+  //Serial.println(error);
+  int deviation = calculatedeviation(error);
+  //Serial.print(" Deviation : ");
+  //Serial.println(deviation);
+    target1 = 3048 - deviation;
+    target2 = 3048 + deviation;
+  // ラインの検出処理
+  //1if(white != 0 && black != 0){//閾値を決定したら
+    //車輪の制御
   delay(10);
+ 
+  jrk1.setTarget(target1);
+  jrk2.setTarget(target2);
 
-  jrk1.setTarget(2548);
-  jrk2.setTarget(2548);
-
-  Serial.println(count);
-  Serial.println(low_black);
-  if (low_black <= sensorValue[0] && sensorValue[0] <= high_black && low_black <= sensorValue[7] && sensorValue[7] <= high_black){
+  if (low_black < sensorValue[0] && sensorValue[0] < high_black && low_black < sensorValue[7] && sensorValue[7] < high_black){
     count += 1;
-    delay(100);
-  }
-
-  if(count == 2){
-    jrk1.stopMotor();
-    jrk2.stopMotor();
     delay(1000);
-
-    jrk1.setTarget(2548);
-    jrk2.setTarget(1548);
-    delay(2000);
-
-    jrk1.stopMotor();
-    jrk2.stopMotor();
-    delay(100);
-
-    analogWrite(PIN_MOTER, MAX);
-    delay(3000);
-
-    for (angle = 0; angle <= 70; angle += 2){
-      myservo.write(angle);
-      analogWrite(PIN_MOTER, MAX);
-      delay(40);
-    }
-
-    analogWrite(PIN_MOTER, 0);
-
-    for (angle = 70; angle <= 140; angle += 3){
-      myservo.write(angle);
-      delay(40);
-    }
-    delay(1000);
-
-    for (angle = 140; angle >= 0; angle -= 2){
-      myservo.write(angle);
-      delay(40);
-    }
-
-    jrk1.setTarget(1548);
-    jrk2.setTarget(2548);
-    delay(2000);
-
-    count = 0;
-    
   }
+   Serial.println(count);
 }
-void determineThreshold() {
+
+void determineThreshold() {//後で書き換え
   // 白黒が決定した場合に閾値を決定する処理
   threshold = (black + white) / 2;
   // シリアルモニタに閾値を表示
   Serial.print("Threshold: ");
   Serial.println(threshold);
 }
+
 void determineWhite() {
-   int total = 0;
+  int total = 0;
    total += analogRead(sensor1Pin);
    total += analogRead(sensor2Pin);
    total += analogRead(sensor3Pin);
@@ -177,5 +133,25 @@ void determineBlack() {
    high_black = black + 100;
    Serial.print("Black: ");
    Serial.println(black);
-   Serial.println(low_black);
+}
+int calculateError(int sensorValue[]) {
+  double sum = 0;
+  int weight[] = {-10, -7, -4, -1, 1, 4, 7, 10};//leftはマイナス
+  for (int i=0; i < 8; i++){
+    sum += sensorValue[i]*weight[i];
+  }
+  return sum;
+}
+int calculatedeviation(int error) {
+  const int max_deviation = targetRange;
+  const int min_deviation = -targetRange;
+  int deviation = 0;
+  deviation = map(error, -threshold*10, threshold*10, -targetRange, targetRange);
+  if (deviation > max_deviation){
+    deviation = max_deviation;
+  }
+  if(deviation < min_deviation){
+    deviation = min_deviation;
+  }
+  return deviation;
 }
