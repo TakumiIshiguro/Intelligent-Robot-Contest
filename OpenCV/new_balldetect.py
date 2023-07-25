@@ -43,7 +43,7 @@ while True:
         gaus = cv2.GaussianBlur(gray, (33, 33), sigmaX=3)
 
         # 円を検出
-        circles = cv2.HoughCircles(gaus, cv2.HOUGH_GRADIENT, 1, 250, param1=100, param2=25, minRadius=25, maxRadius=250)
+        circles = cv2.HoughCircles(gaus, cv2.HOUGH_GRADIENT, 1, 250, param1=100, param2=25, minRadius=45, maxRadius=250)
 
         # 検出した円が存在する場合にのみ処理する
         if circles is not None:

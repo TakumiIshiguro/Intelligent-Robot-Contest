@@ -16,8 +16,8 @@ const int PIN_MOTER = 13;
 const int DIR = 14;
 const int STEP = 15;
 
-int centerX = 700;
-int centerY = 440;
+int centerX = 665;
+int centerY = 465;
 
 int right_correctionX;
 int left_correctionX;
@@ -26,13 +26,14 @@ int correctionY;
 int right_speed;
 int left_speed;
 
+int count = 4;
 int16_t x, y;
 
 void setup() {
   Wire.begin();
 
   myservo.attach(5);
-  angle = 0;
+  angle = 32;
   myservo.write(angle);
 
   pinMode(PIN_MOTER, OUTPUT);
@@ -52,12 +53,11 @@ void setup() {
 }
 
 void loop() {
-  myservo.write(0);
+  
 
   right_correctionX = 0;
   left_correctionX = 0;
   correctionY = 0;
-  add_correctionY = 0;
 
   right_speed = 0;
   left_speed = 0;
@@ -65,7 +65,8 @@ void loop() {
   x = 0;
   y = 0;
 
-  if (Serial.available()) {
+  if (count == 4) {
+    Serial.begin(9600);
     char header[2];
     
     if (Serial.readBytes(header, 2) != 2 || header[0] != 'X' || header[1] != 'Y') {
@@ -99,12 +100,7 @@ void loop() {
     jrk1.setTarget(right_speed);
     jrk2.setTarget(left_speed);
 
-    Serial.print("right:");
-    Serial.println(right_speed);
-    Serial.print("left:");
-    Serial.println(left_speed);
-
-    if (675 < x && x < 750 && 400 < y && y < 470){
+    if (630 < x && x < 670 && 450 < y && y < 475){
       Serial.println("mode_change");
       jrk1.stopMotor();
       jrk2.stopMotor();
@@ -137,4 +133,15 @@ void loop() {
       }
     }
   }
+
+  if (count == 5){
+    Serial.println("count5");
+    Serial.end();
+
+    jrk1.setTarget(1848);
+    jrk2.setTarget(1848);
+    delay(1000);
+    count = 4;   
+  }
+
 }
